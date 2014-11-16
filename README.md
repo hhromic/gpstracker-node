@@ -51,6 +51,8 @@ OsmAnd GPS clients can have meta-data associated such as a name. For this, you m
 }
 ```
 
+In this configuration object, the keys correspond to client Ids that you use later when configuring OsmAnd.
+
 OsmAnd Configuration
 --------------------
 
