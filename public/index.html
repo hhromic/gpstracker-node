@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+<meta charset="UTF-8">
+<head>
+<title>Live GPS Tracker</title>
+<meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+<style>
+html, body, #map-canvas {
+  height: 100%;
+  margin: 0px;
+  padding: 0px;
+}
+.markerInfo {
+  width: 245px;
+  height: auto;
+  margin: 0px;
+  padding: 0px;
+}
+</style>
+<script src="https://maps.googleapis.com/maps/api/js?v=3.exp"></script>
+<script src="http://code.jquery.com/jquery-2.1.1.min.js"></script>
+<script>
+var WS_URL = 'ws://' + window.location.host + '/gpstracker/';
+var markers = {};
+var infoWindows = {};
+
+function parseEvent(event) {
+  return {
+    cid: event.data.cid,
+    name: event.client.name,
+    lat: parseFloat(event.data.lat),
+    lon: parseFloat(event.data.lon),
+    timestamp: parseInt(event.data.timestamp),
+    hdop: parseFloat(event.data.hdop),
+    altitude: parseFloat(event.data.altitude),
+    speed: parseFloat(event.data.speed),
+    bearing: parseFloat(event.data.bearing),
+  };
+}
+
+function parseTimestamp(timestamp) {
+  var date = new Date(timestamp);
+  var month = date.getMonth() + 1;
+  var day = date.getDay();
+  var hours = date.getHours();
+  var minutes = date.getMinutes();
+  var seconds = date.getSeconds();
+  var millis = date.getMilliseconds();
+  return date.getFullYear() + '-' +
+    (month < 10 ? '0' + month : month) + '-' +
+    (day < 10 ? '0' + day : day) + ' ' +
+    (hours < 10 ? '0' + hours : hours) + ':' +
+    (minutes < 10 ? '0' + minutes : minutes) + ':' +
+    (seconds < 10 ? '0' + seconds : seconds) + '.' +
+    (millis < 100 ? (millis < 10 ? '00' + millis : '0' + millis) : millis) + ' ' +
+    '(UTC)';
+}
+
+function updateMarker(event, map) {
+  // create marker if event was not seen before
+  if (!(event.cid in markers)) {
+    var marker = new google.maps.Marker({
+      position: null,
+      map: map,
+      title: event.name,
+    });
+    var infoWindow = new google.maps.InfoWindow({
+      content: ''
+    });
+    markers[event.cid] = marker;
+    infoWindows[event.cid] = infoWindow;
+    google.maps.event.addListener(marker, 'click', function() {
+      infoWindow.open(map, marker);
+    });
+  }
+
+  // update marker info window
+  infoWindows[event.cid].setContent('<div id="content">' +
+    '<h1 class="markerInfo">' + event.name + '</h1>' +
+    '<p class="markerInfo"><b>Longitude, Latitude:</b> ' +
+      event.lon.toFixed(5) + ', ' + event.lat.toFixed(5) +'</p>' +
+    '<p class="markerInfo"><b>Speed:</b> ' + event.speed + ' km/h</p>' +
+    '<p class="markerInfo"><b>Altitude:</b> ' + event.altitude + ' m</p>' +
+    '<p class="markerInfo"><b>HDOP:</b> ' + event.hdop + ' m</p>' +
+    '<p class="markerInfo"><b>Updated:</b> ' + parseTimestamp(event.timestamp) + '</p>' +
+    '</div>');
+
+  // update marker position
+  markers[event.cid].setPosition(
+    new google.maps.LatLng(event.lat, event.lon)
+  );
+}
+
+function updateState(state, map) {
+  // update markers for all clients
+  firstClient = undefined;
+  for (client in state.lastUpd) {
+    var event = parseEvent(state.lastUpd[client]);
+    updateMarker(event, map);
+    if (firstClient === undefined) {
+      firstClient = client;
+    }
+  }
+
+  // center map around first updated client
+  map.setCenter(markers[firstClient].getPosition());
+}
+
+$(document).ready(function() {
+  // Setup Map display
+  var map = new google.maps.Map(document.getElementById('map-canvas'),
+    {zoom: 16, center: new google.maps.LatLng(-34.397, 150.644)});
+
+  // Setup WebSocket client
+  var wsClient = new WebSocket(WS_URL);
+  wsClient.binaryType = 'arraybuffer';
+  wsClient.onopen = function (open) {
+    console.log('connected to remote server');
+  };
+  wsClient.onclose = function (close) {
+    console.log('disconnected from remote server');
+  };
+  wsClient.onerror = function (error) {
+    console.log('error with remote server');
+  };
+  wsClient.onmessage = function (message) {
+    var messageData = JSON.parse(message.data);
+    if ('client' in messageData) {
+      var event = parseEvent(messageData);
+      updateMarker(event, map);
+      console.log('client update -- cid: %s, lat: %f, long: %f, speed: %f, updated: %d',
+        event.cid, event.lat, event.lon, event.speed, event.timestamp);
+    } else {
+      updateState(messageData, map);
+      console.log('updated current state');
+    }
+  };
+});
+</script>
+<body>
+<div id="map-canvas"></div>
+</body>
+</html>
