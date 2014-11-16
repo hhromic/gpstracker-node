@@ -79,8 +79,8 @@ function updateMarker(event, map) {
     '<h1 class="markerInfo">' + event.name + '</h1>' +
     '<p class="markerInfo"><b>Longitude, Latitude:</b> ' +
       event.lon.toFixed(5) + ', ' + event.lat.toFixed(5) +'</p>' +
-    '<p class="markerInfo"><b>Speed:</b> ' + event.speed + ' km/h</p>' +
-    '<p class="markerInfo"><b>Altitude:</b> ' + event.altitude + ' m</p>' +
+    '<p class="markerInfo"><b>Speed:</b> ' + event.speed.toFixed(2) + ' km/h</p>' +
+    '<p class="markerInfo"><b>Altitude:</b> ' + event.altitude.toFixed(2) + ' m</p>' +
     '<p class="markerInfo"><b>HDOP:</b> ' + event.hdop + ' m</p>' +
     '<p class="markerInfo"><b>Updated:</b> ' + parseTimestamp(event.timestamp) + '</p>' +
     '</div>');
