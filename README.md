@@ -36,6 +36,8 @@ $ node gpstracker.js -p 2227
 
 Then you start your OsmAnd clients and allow for some updates to be sent via the Internet first. Afterwards you point your favourite HTML5 browser to the server address above and you can watch a real-time live display of all your tracked clients. You can click on any client marker in the map to see detailed tracking data such as position, speed and HDOP.
 
+**Note:** if you plan to run this server behind a proxy such as [nginx](http://nginx.org/) and a custom URL-path, don't forget to adjust the ```WS_URL``` variable accordingly in the ```public/index.html``` file.
+
 GPS Clients Configuration
 -------------------------
 
@@ -45,9 +47,19 @@ OsmAnd GPS clients can have meta-data associated such as a name. For this, you m
 {
   "hugo": {"name": "Hugo"},
   "mario": {"name": "Mario"},
-  "erik": {"erik": "Erik"}
+  "erik": {"name": "Erik"}
 }
 ```
 
 OsmAnd Configuration
 --------------------
+
+You must configure your OsmAnd clients to provide real-time location information via network (Wi-Fi or mobile data) to the tracking server as follows.
+
+1. Go to "Settings" -> "Plugins".
+2. Activate the "Record your trips" plugin.
+3. Go to "Settings" -> "Trip recording" (should appear after activating the above plugin).
+4. In "Online tracking web address" enter the following URL: ```http://yourserver:port/update?cid=YOURCLIENTID&lat={0}&lon={1}&timestamp={2}&hdop={3}&altitude={4}&speed={5}&bearing={6}```.
+5. Configure the update interval to your taste.
+
+After you configure OsmAnd with the above settings, you are ready to go. In the map view (either browsing or navigating) you will see a "GPX" widget. Touch it and select "Start GPX recording", then click the widget again and select "Start online tracking".
