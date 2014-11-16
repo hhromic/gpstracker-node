@@ -1,7 +1,7 @@
 gpstracker-node
 ===============
 
-A simple Live GPS Tracker for Node.JS for [OsmAnd](https://play.google.com/store/apps/details?id=net.osmand) clients.
+A simple Live GPS Tracker for Node.JS and [OsmAnd](https://play.google.com/store/apps/details?id=net.osmand) clients.
 
 Module Requirements
 -------------------
@@ -24,7 +24,7 @@ This simple program tracks a collection of OsmAnd GPS clients and allows for rea
 $ node gpstracker.js <portNumber> <clientsConfig>
 ```
 
-* ```portNumber``` is the http port to use for both static and websocket connections.
+* ```portNumber``` is the HTTP port to use for both static and websocket connections.
 * ```clientsConfig``` is the GPS clients meta-data configuration file in JSON format.
 
 **Example:**
@@ -38,6 +38,16 @@ Then you start your OsmAnd clients and allow for some updates to be sent via the
 
 GPS Clients Configuration
 -------------------------
+
+OsmAnd GPS clients can have meta-data associated such as a name. For this, you must create a JSON file with the following format (see the included ```clients.json``` example file):
+
+```json
+{
+  "hugo": {"name": "Hugo"},
+  "mario": {"name": "Mario"},
+  "erik": {"erik": "Erik"}
+}
+```
 
 OsmAnd Configuration
 --------------------
