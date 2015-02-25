@@ -50,6 +50,7 @@ wsServer.on('request', function (request) {
 });
 
 // GPS client update resource and static content
+// speed = m/s, bearing = degrees from North to the East
 app.get('/update', function (request, response) {
   var cid = request.query.cid;
   if (cid !== undefined && cid in clients) {

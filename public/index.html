@@ -18,7 +18,7 @@ html, body, #map-canvas {
 }
 </style>
 <script src="https://maps.googleapis.com/maps/api/js?v=3.exp"></script>
-<script src="http://code.jquery.com/jquery-2.1.1.min.js"></script>
+<script src="http://code.jquery.com/jquery-2.1.3.min.js"></script>
 <script>
 var WS_URL = 'ws://' + window.location.host + '/';
 var markers = {};
@@ -79,8 +79,9 @@ function updateMarker(event, map) {
     '<h1 class="markerInfo">' + event.name + '</h1>' +
     '<p class="markerInfo"><b>Longitude, Latitude:</b> ' +
       event.lon.toFixed(5) + ', ' + event.lat.toFixed(5) +'</p>' +
-    '<p class="markerInfo"><b>Speed:</b> ' + event.speed.toFixed(2) + ' km/h</p>' +
+    '<p class="markerInfo"><b>Speed:</b> ' + (event.speed * 3.6).toFixed(2) + ' km/h</p>' +
     '<p class="markerInfo"><b>Altitude:</b> ' + event.altitude.toFixed(2) + ' m</p>' +
+    '<p class="markerInfo"><b>Bearing:</b> ' + event.bearing.toFixed(2) + ' deg</p>' +
     '<p class="markerInfo"><b>HDOP:</b> ' + event.hdop + ' m</p>' +
     '<p class="markerInfo"><b>Updated:</b> ' + parseTimestamp(event.timestamp) + '</p>' +
     '</div>');
@@ -103,7 +104,9 @@ function updateState(state, map) {
   }
 
   // center map around first updated client
-  map.setCenter(markers[firstClient].getPosition());
+  if (firstClient !== undefined) {
+      map.setCenter(markers[firstClient].getPosition());
+  }
 }
 
 $(document).ready(function() {
