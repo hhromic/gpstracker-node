@@ -1,0 +1,35 @@
+{
+  "name": "gpstracker-node",
+  "version": "1.0.0",
+  "description": "A simple multi-client OsmAnd Live GPS Tracker server",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hhromic/gpstracker-node"
+  },
+  "keywords": [
+    "osmand",
+    "websocket",
+    "gps",
+    "tracking",
+    "server"
+  ],
+  "author": "Hugo Hromic",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/hhromic/gpstracker-node/issues"
+  },
+  "homepage": "https://github.com/hhromic/gpstracker-node",
+  "dependencies": {
+    "cjson": "^0.3.0",
+    "express": "^4.12.3",
+    "log4js": "^0.6.22",
+    "ws": "^0.7.1",
+    "yargs": "^3.5.4"
+  },
+  "bin": {
+    "gpstracker": "bin/gpstracker"
+  }
+}

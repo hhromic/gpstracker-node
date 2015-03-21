@@ -1,0 +1,104 @@
+#!/usr/bin/env node
+/*!
+ * A simple multi-client OsmAnd Live GPS Tracker server.
+ *
+ * Hugo Hromic - http://github.com/hhromic
+ * Apache 2.0 license
+ */
+
+'use strict';
+
+// Required modules
+var yargs = require('yargs');
+var cjson = require('cjson');
+var log4js = require('log4js');
+var express = require('express');
+var ws = require('ws');
+
+// Loggers
+var logger = log4js.getLogger('main');
+var updLogger = log4js.getLogger('update');
+var wsLogger = log4js.getLogger('websocket');
+
+// Setup and parse program arguments
+var argv = yargs
+  .usage('Usage: $0 [options]')
+  .options({
+    'p': {alias: 'port', default: 2223,
+      describe: 'server port'},
+    'c': {alias: 'clients', default: 'clients.json',
+      describe: 'GPS clients data file'}
+  })
+  .help('h')
+  .alias('h', 'help')
+  .version(function version() {
+    return require('../package').version;
+  }, 'V')
+  .alias('V', 'version')
+  .example('$0 --port 2221', 'use server port 2221')
+  .strict().argv;
+
+// Load GPS clients data
+try {
+  var clients = cjson.load(argv.clients);
+}
+catch (err) {
+  logger.error('clients load: %s', err.toString());
+  process.exit(1);
+}
+
+// Express application and server
+var app = express();
+app.enable('trust proxy');
+var server = app.listen(argv.port, function onListening() {
+  var host = server.address().address;
+  var port = server.address().port;
+  logger.info('server listening on http://%s:%s', host, port);
+});
+
+// WebSocket server
+var lastUpd = {};
+var wsServer = new ws.Server({server: server});
+wsServer.broadcast = function broadcast(data) {
+  wsServer.clients.forEach(function each(client) {
+    client.send(data);
+  });
+};
+wsServer.on('error', function onError(err) {
+  wsLogger.error('server error: %s', err.toString());
+});
+wsServer.on('connection', function onConnection(wsClient) {
+  // Setup connection pinger and client ip address
+  var pingTimer = setInterval(function pinger() { wsClient.ping(); }, 20000);
+  var ipAddress = wsClient.upgradeReq.headers['x-real-ip'] ||
+    wsClient.upgradeReq.connection.remoteAddress;
+
+  // Setup client connection event handlers
+  wsClient.on('error', function onError(err) {
+    wsLogger.error('error in client from %s: %s', ipAddress, err.toString());
+  });
+  wsClient.on('close', function onClose() {
+    clearInterval(pingTimer);
+    wsLogger.debug('client from %s disconnected', ipAddress);
+  });
+
+  // Send last updates and log new client connection
+  wsClient.send(JSON.stringify({lastUpd: lastUpd}));
+  wsLogger.debug('client from %s connected', ipAddress);
+});
+
+// GPS client update resource and static content
+// speed = m/s, bearing = degrees from North to the East
+app.get('/update', function (request, response) {
+  var cid = request.query.cid;
+  if (cid !== undefined && cid in clients) {
+      lastUpd[cid] = {client: clients[cid], data: request.query};
+      wsServer.broadcast(JSON.stringify(lastUpd[cid]));
+      response.send('ok\n');
+      updLogger.debug('%s sent %j', request.ip, request.query);  
+  } else {
+      response.send('invalid\n');
+      updLogger.warn('invalid client \'%s\' from %s', cid, request.ip);
+  }
+});
+app.use(express.static(__dirname + '/../public'));
