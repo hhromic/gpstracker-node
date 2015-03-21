@@ -6,10 +6,12 @@ A simple Live GPS Tracker for Node.JS and [OsmAnd](https://play.google.com/store
 Installation
 ------------
 
-To install the gpstracker, just use npm:
+To install, use ```npm```:
 
 ```shell
-$ npm install gpstracker-node
+$ git clone https://github.com/hhromic/gpstracker-node
+$ cd gpstracker-node
+$ npm install . -g
 ```
 
 Usage
