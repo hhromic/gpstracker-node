@@ -9,9 +9,7 @@ Installation
 To install, use ```npm```:
 
 ```shell
-$ git clone https://github.com/hhromic/gpstracker-node
-$ cd gpstracker-node
-$ npm install . -g
+$ npm install -g gpstracker-node
 ```
 
 Usage
