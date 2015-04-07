@@ -1,6 +1,6 @@
 {
   "name": "gpstracker-node",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "A simple multi-client OsmAnd Live GPS Tracker server",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -27,7 +27,7 @@
     "express": "^4.12.3",
     "log4js": "^0.6.22",
     "ws": "^0.7.1",
-    "yargs": "^3.5.4"
+    "yargs": "^3.7.0"
   },
   "bin": {
     "gpstracker": "bin/gpstracker"
