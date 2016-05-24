@@ -25,7 +25,7 @@ $ gpstracker -p <portNumber> -c <clientsConfig>
 
 ```shell
 $ gpstracker -p 2227 -c examples/clients.json
-[2014-11-15 23:57:01.077] [INFO] main - started app server on http://0.0.0.0:2227
+[2014-11-15 23:57:01.077] [INFO] app - started app server on http://0.0.0.0:2227
 ```
 
 Then you start your OsmAnd clients and allow for some updates to be sent via the Internet first. Afterwards you point your favourite HTML5 browser to the server address above and you can watch a real-time live display of all your tracked clients. You can click on any client marker in the map to see detailed tracking data such as position, speed and HDOP.
