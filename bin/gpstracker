@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+/* jshint node:true */
+'use strict';
+
 /*!
  * A simple multi-client OsmAnd Live GPS Tracker server.
  *
@@ -6,99 +9,99 @@
  * Apache 2.0 license
  */
 
-'use strict';
-
-// Required modules
-var yargs = require('yargs');
-var cjson = require('cjson');
+// required modules
 var log4js = require('log4js');
+var argparse = require('argparse');
+var cjson = require('cjson');
 var express = require('express');
 var ws = require('ws');
+var path = require('path');
+var _package = require('../package');
 
-// Loggers
-var logger = log4js.getLogger('main');
-var updLogger = log4js.getLogger('update');
-var wsLogger = log4js.getLogger('websocket');
+// loggers
+var loggers = {
+ app: log4js.getLogger('app:' + process.pid),
+ update: log4js.getLogger('update:' + process.pid),
+ websocket: log4js.getLogger('websocket:' + process.pid),
+};
 
-// Setup and parse program arguments
-var argv = yargs
-  .usage('Usage: $0 [options]')
-  .options({
-    'p': {alias: 'port', default: 2223,
-      describe: 'server port'},
-    'c': {alias: 'clients', default: 'clients.json',
-      describe: 'GPS clients data file'}
-  })
-  .help('h')
-  .alias('h', 'help')
-  .version(function version() {
-    return require('../package').version;
-  }, 'V')
-  .alias('V', 'version')
-  .example('$0 --port 2221', 'use server port 2221')
-  .strict().argv;
+// process command-line arguments
+var argParser = argparse.ArgumentParser({
+  version: _package.version,
+  description: _package.description
+});
+argParser.addArgument(['-p', '--port'], {
+  defaultValue: 2223, type: Number,
+  help: 'app server port (default: 2223)'
+});
+argParser.addArgument(['-c', '--clients'], {
+  defaultValue: 'clients.json',
+  help: 'GPS clients data file in JSON format'
+});
+var options = argParser.parseArgs();
 
-// Load GPS clients data
+// load GPS clients data
 try {
-  var clients = cjson.load(argv.clients);
+  var clients = cjson.load(options.clients);
 }
 catch (err) {
-  logger.error('clients load: %s', err.toString());
+  loggers.app.error('clients load: %s', err.toString());
   process.exit(1);
 }
 
-// Express application and server
+// initialise Express application server
 var app = express();
 app.enable('trust proxy');
-var server = app.listen(argv.port, function onListening() {
-  var host = server.address().address;
-  var port = server.address().port;
-  logger.info('server listening on http://%s:%s', host, port);
+var appServer = app.listen(options.port, function onListening () {
+  var host = appServer.address().address;
+  var port = appServer.address().port;
+  loggers.app.info('started app server on http://%s:%d', host, port);
 });
 
-// WebSocket server
+// initialise WebSocket server
 var lastUpd = {};
-var wsServer = new ws.Server({server: server});
-wsServer.broadcast = function broadcast(data) {
-  wsServer.clients.forEach(function each(client) {
+var wsServer = new ws.Server({server: appServer});
+wsServer.broadcast = function broadcast (data) {
+  wsServer.clients.forEach(function each (client) {
     client.send(data);
   });
 };
-wsServer.on('error', function onError(err) {
-  wsLogger.error('server error: %s', err.toString());
+wsServer.on('error', function onError (err) {
+  loggers.websocket.error('server error: %s', err.toString());
 });
-wsServer.on('connection', function onConnection(wsClient) {
-  // Setup connection pinger and client ip address
-  var pingTimer = setInterval(function pinger() { wsClient.ping(); }, 20000);
+wsServer.on('connection', function onConnection (wsClient) {
+  var pingTimer = setInterval(function pinger () { wsClient.ping(); }, 20000);
   var ipAddress = wsClient.upgradeReq.headers['x-real-ip'] ||
     wsClient.upgradeReq.connection.remoteAddress;
 
-  // Setup client connection event handlers
-  wsClient.on('error', function onError(err) {
-    wsLogger.error('error in client from %s: %s', ipAddress, err.toString());
+  // initialise WebSocket client events
+  wsClient.on('error', function onError (err) {
+    loggers.websocket.error('error in client from %s: %s', ipAddress, err.toString());
   });
-  wsClient.on('close', function onClose() {
+  wsClient.on('close', function onClose () {
     clearInterval(pingTimer);
-    wsLogger.debug('client from %s disconnected', ipAddress);
+    loggers.websocket.debug('client from %s disconnected', ipAddress);
   });
 
-  // Send last updates and log new client connection
+  // send last updates and log new client connection
   wsClient.send(JSON.stringify({lastUpd: lastUpd}));
-  wsLogger.debug('client from %s connected', ipAddress);
+  loggers.websocket.debug('client from %s connected', ipAddress);
 });
 
-// GPS client update resource and static content
+// GPS client update resource
 // speed = m/s, bearing = degrees from North to the East
-app.get('/update', function onUpdate(request, response) {
+app.get('/update', function onUpdate (request, response) {
   var cid = request.query.cid;
   if (cid !== undefined && cid in clients) {
       lastUpd[cid] = {client: clients[cid], data: request.query};
       wsServer.broadcast(JSON.stringify(lastUpd[cid]));
       response.send('ok\n');
-      updLogger.debug('%s sent %j', request.ip, request.query);  
+      loggers.update.debug('%s sent %j', request.ip, request.query);
   } else {
       response.send('invalid\n');
-      updLogger.warn('invalid client \'%s\' from %s', cid, request.ip);
+      loggers.update.warn('invalid client \'%s\' from %s', cid, request.ip);
   }
 });
-app.use(express.static(__dirname + '/../public'));
+
+// initialise static content serving
+app.use(express.static(path.join(__dirname, '..', 'public')));
