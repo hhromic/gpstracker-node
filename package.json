@@ -25,8 +25,8 @@
   "dependencies": {
     "argparse": "^1.0.7",
     "cjson": "^0.4.0",
-    "express": "^4.13.4",
-    "log4js": "^0.6.36",
+    "express": "^4.14.0",
+    "log4js": "^0.6.37",
     "ws": "^1.1.0"
   },
   "optionalDependencies": {
