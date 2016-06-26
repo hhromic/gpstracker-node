@@ -27,7 +27,7 @@
     "cjson": "^0.4.0",
     "express": "^4.14.0",
     "log4js": "^0.6.37",
-    "ws": "^1.1.0"
+    "ws": "^1.1.1"
   },
   "optionalDependencies": {
     "bufferutil": "^1.2.1",
